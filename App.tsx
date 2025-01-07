@@ -1,118 +1,94 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState } from 'react';
+import { View, ScrollView, Text } from 'react-native';
+import { Button, TextInput, Title, Surface } from 'react-native-paper';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+export default function App() {
+  const [inputs, setInputs] = useState({
+    principal: '1000000', // Initial principal amount
+    withdrawal: '10000',  // Monthly withdrawal amount
+    rate: '8',            // Annual return rate (%)
+    time: '10',           // Time in years
+  });
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  const [results, setResults] = useState<{ [key: string]: string } | null>(null);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  const calculateSWP = () => {
+    const principal = parseFloat(inputs.principal);
+    const withdrawal = parseFloat(inputs.withdrawal);
+    const rate = parseFloat(inputs.rate) / 100 / 12;
+    const months = parseFloat(inputs.time) * 12;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+    let remainingPrincipal = principal;
+    let totalWithdrawals = 0;
+    for (let i = 0; i < months; i++) {
+      remainingPrincipal = remainingPrincipal * (1 + rate) - withdrawal;
+      if (remainingPrincipal < 0) {
+        break;
+      }
+      totalWithdrawals += withdrawal;
+    }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    setResults({
+      "Total Investment": principal.toFixed(2),
+      "Total Withdrawals": totalWithdrawals.toFixed(2),
+      "Remaining Principal": Math.max(remainingPrincipal, 0).toFixed(2),
+    });
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <ScrollView style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+      <View style={{ padding: 16 }}>
+        <Title style={{ textAlign: 'center', marginBottom: 20 }}>SWP Calculator</Title>
+
+        <Surface style={{ padding: 16, borderRadius: 8 }}>
+          <TextInput
+            label="Principal Amount (₹)"
+            value={inputs.principal}
+            onChangeText={(text) => setInputs({ ...inputs, principal: text })}
+            keyboardType="numeric"
+            mode="outlined"
+            style={{ marginBottom: 16 }}
+          />
+          <TextInput
+            label="Monthly Withdrawal (₹)"
+            value={inputs.withdrawal}
+            onChangeText={(text) => setInputs({ ...inputs, withdrawal: text })}
+            keyboardType="numeric"
+            mode="outlined"
+            style={{ marginBottom: 16 }}
+          />
+          <TextInput
+            label="Annual Return Rate (%)"
+            value={inputs.rate}
+            onChangeText={(text) => setInputs({ ...inputs, rate: text })}
+            keyboardType="numeric"
+            mode="outlined"
+            style={{ marginBottom: 16 }}
+          />
+          <TextInput
+            label="Time Period (Years)"
+            value={inputs.time}
+            onChangeText={(text) => setInputs({ ...inputs, time: text })}
+            keyboardType="numeric"
+            mode="outlined"
+            style={{ marginBottom: 16 }}
+          />
+          <Button mode="contained" onPress={calculateSWP}>
+            Calculate
+          </Button>
+        </Surface>
+
+        {results && (
+          <Surface style={{ padding: 16, borderRadius: 8, marginTop: 20 }}>
+            {Object.entries(results).map(([key, value]) => (
+              <View key={key} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text>{key}:</Text>
+                <Text>₹{value}</Text>
+              </View>
+            ))}
+          </Surface>
+        )}
+      </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
-export default App;
